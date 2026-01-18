@@ -4,11 +4,10 @@
 Tramite lang-graph verrà implemtato un sistema multiagent alexa like che risponderà ai seguenti compiti:
 1. Invocazione meteo tramite scaricamento dati da API di meteo.
 2. Oroscopo con traduzione automatica
-3. Conversazioni generiche, saluti e small talk
+3. Conversazioni generiche, saluti e small talk 
 4. Ricerca informazioni enciclopediche su Wikipedia
-5. Calendario (prossimamente)
-6. Calcolatrice (prossimamente)
-7. Traduttore (prossimamente)
+5. Calcolatrice (prossimamente)
+6. Traduttore (prossimamente)
 
 ### Gestione Conversazionale Intelligente
 Il sistema include una **gestione dello stato conversazionale** che permette agli agenti di mantenere il contesto tra richieste successive:
@@ -160,6 +159,7 @@ L'agente conversazionale generale gestisce interazioni naturali e funge da fallb
 - **Ringraziamenti**
 - **Small talk**
 - **Domande sull'assistente**
+- **Domande sulla data corrente**
 - **Fallback**: Qualsiasi richiesta non coperta da meteo, oroscopo o altri agenti specializzati
 
 ### Caratteristiche della Personalità
