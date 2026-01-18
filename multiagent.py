@@ -13,6 +13,7 @@ import operator
 from dotenv import load_dotenv
 
 from agents.weather_agent import run_weather_agent, visualize_graph
+from agents.horoscope_agent import run_horoscope_agent
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -55,8 +56,9 @@ def supervisor_router(state: SupervisorState) -> SupervisorState:
 
 Agenti disponibili:
 1. WEATHER - Specializzato in: meteo, condizioni atmosferiche, pioggia, neve, temperatura, umidità, sole, vento, clima
-2. YOUTUBE - Specializzato in: ricerca video, contenuti multimedia (non ancora disponibile)
-3. BASIC - Specializzato in: oroscopo, calendario, calcolatrice, traduttore, funzionalità base (non ancora disponibile)
+2. HOROSCOPE - Specializzato in: oroscopo, segni zodiacali, previsioni astrologiche
+3. YOUTUBE - Specializzato in: ricerca video, contenuti multimedia (non ancora disponibile)
+4. BASIC - Specializzato in: calendario, calcolatrice, traduttore, funzionalità base (non ancora disponibile)
 
 Analizza la seguente query e decidi quale agente è il più appropriato.
 
@@ -64,7 +66,7 @@ Query utente: {user_query}
 
 Rispondi in JSON con il seguente formato:
 {{
-    "agent": "WEATHER" | "YOUTUBE" | "BASIC" | "NONE",
+    "agent": "WEATHER" | "HOROSCOPE" | "YOUTUBE" | "BASIC" | "NONE",
     "confidence": 0.0-1.0,
     "reason": "breve spiegazione"
 }}
@@ -103,6 +105,11 @@ Se nessun agente è appropriato, usa "NONE"."""
                 state["messages"].append(
                     AIMessage(content="Ho identificato una richiesta sul meteo. Attivo l'agente METEO...")
                 )
+            elif "horoscope" in content_lower or "oroscopo" in content_lower:
+                state["selected_agent"] = "HOROSCOPE"
+                state["messages"].append(
+                    AIMessage(content="Ho identificato una richiesta sull'oroscopo. Attivo l'agente OROSCOPO...")
+                )
             else:
                 state["selected_agent"] = "NONE"
                 state["messages"].append(
@@ -139,6 +146,27 @@ def execute_weather_agent(state: SupervisorState) -> SupervisorState:
     return state
 
 
+def execute_horoscope_agent(state: SupervisorState) -> SupervisorState:
+    """Esegue l'agente oroscopo"""
+    if state.get("selected_agent") != "HOROSCOPE":
+        return state
+    
+    try:
+        result = run_horoscope_agent(state["user_query"])
+        state["agent_result"] = result
+        
+        # Aggiungi i messaggi dell'agente oroscopo
+        for msg in result.get("messages", []):
+            state["messages"].append(AIMessage(content=msg.content))
+            
+    except Exception as e:
+        state["messages"].append(
+            AIMessage(content=f"Errore nell'esecuzione dell'agente OROSCOPO: {str(e)}")
+        )
+    
+    return state
+
+
 def handle_unsupported_agent(state: SupervisorState) -> SupervisorState:
     """Gestisce gli agenti non ancora disponibili"""
     if state.get("selected_agent") in ["YOUTUBE", "BASIC"]:
@@ -167,6 +195,7 @@ def build_supervisor_agent():
     # Aggiungiamo i nodi
     workflow.add_node("router", supervisor_router)
     workflow.add_node("weather_agent", execute_weather_agent)
+    workflow.add_node("horoscope_agent", execute_horoscope_agent)
     workflow.add_node("unsupported", handle_unsupported_agent)
     
     # Definiamo il flusso
@@ -176,10 +205,12 @@ def build_supervisor_agent():
     workflow.add_conditional_edges(
         "router",
         lambda state: "weather_agent" if state.get("selected_agent") == "WEATHER" 
+                     else "horoscope_agent" if state.get("selected_agent") == "HOROSCOPE"
                      else "unsupported" if state.get("selected_agent") in ["YOUTUBE", "BASIC"]
                      else "end",
         {
             "weather_agent": "weather_agent",
+            "horoscope_agent": "horoscope_agent",
             "unsupported": "unsupported",
             "end": END
         }
@@ -187,6 +218,9 @@ def build_supervisor_agent():
     
     # Da weather_agent a END
     workflow.add_edge("weather_agent", END)
+    
+    # Da horoscope_agent a END
+    workflow.add_edge("horoscope_agent", END)
     
     # Da unsupported a END
     workflow.add_edge("unsupported", END)
@@ -289,11 +323,13 @@ def main():
     print("per decidere quale agente specializzato attivare.\n")
     print("Agenti disponibili:")
     print("  • METEO - Ottiene dati meteorologici")
+    print("  • OROSCOPO - Fornisce oroscopi tradotti in italiano")
     print("  • YOUTUBE - Ricerca video (prossimamente)")
-    print("  • BASIC - Oroscopo, Calendario, Calcolatrice, Traduttore (prossimamente)")
+    print("  • BASIC - Calendario, Calcolatrice, Traduttore (prossimamente)")
     print("\nComandi speciali:")
     print("  - 'grafo' - Visualizza il grafo del supervisore")
     print("  - 'grafo-meteo' - Visualizza il grafo dell'agente meteo")
+    print("  - 'grafo-oroscopo' - Visualizza il grafo dell'agente oroscopo")
     print("  - 'esci' - Esce dall'applicazione\n")
     
     while True:
@@ -312,6 +348,13 @@ def main():
         if user_query.lower() == "grafo-meteo":
             print("\n")
             visualize_graph()
+            print("\n")
+            continue
+        
+        if user_query.lower() == "grafo-oroscopo":
+            print("\n")
+            from agents.horoscope_agent import visualize_graph as visualize_horoscope_graph
+            visualize_horoscope_graph()
             print("\n")
             continue
         
