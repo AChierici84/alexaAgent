@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 from agents.weather_agent import run_weather_agent, visualize_graph
 from agents.horoscope_agent import run_horoscope_agent
+from agents.general_agent import run_general_agent
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -57,8 +58,14 @@ def supervisor_router(state: SupervisorState) -> SupervisorState:
 Agenti disponibili:
 1. WEATHER - Specializzato in: meteo, condizioni atmosferiche, pioggia, neve, temperatura, umidità, sole, vento, clima
 2. HOROSCOPE - Specializzato in: oroscopo, segni zodiacali, previsioni astrologiche
-3. YOUTUBE - Specializzato in: ricerca video, contenuti multimedia (non ancora disponibile)
-4. BASIC - Specializzato in: calendario, calcolatrice, traduttore, funzionalità base (non ancora disponibile)
+3. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti
+4. WIKIPEDIA - Specializzato in: ricerca di voci, informazioni enciclopediche (non ancora disponibile)
+5. BASIC - Specializzato in: calendario, calcolatrice, traduttore (non ancora disponibile)
+
+IMPORTANTE:
+- Usa GENERAL per: saluti (ciao, buongiorno), presentazioni (chi sei, cosa fai), ringraziamenti, conversazioni generiche
+- Usa GENERAL come fallback per qualsiasi cosa non gestita dagli altri agenti
+- Non usare mai NONE, usa sempre GENERAL se nessun altro agente è appropriato
 
 Analizza la seguente query e decidi quale agente è il più appropriato.
 
@@ -66,12 +73,12 @@ Query utente: {user_query}
 
 Rispondi in JSON con il seguente formato:
 {{
-    "agent": "WEATHER" | "HOROSCOPE" | "YOUTUBE" | "BASIC" | "NONE",
+    "agent": "WEATHER" | "HOROSCOPE" | "GENERAL" | "WIKIPEDIA" | "BASIC",
     "confidence": 0.0-1.0,
     "reason": "breve spiegazione"
 }}
 
-Se nessun agente è appropriato, usa "NONE"."""
+Usa GENERAL per tutto ciò che non è meteo, oroscopo, o funzionalità specifiche."""
         
         # Chiama OpenAI
         response = llm.invoke([
@@ -111,15 +118,17 @@ Se nessun agente è appropriato, usa "NONE"."""
                     AIMessage(content="Ho identificato una richiesta sull'oroscopo. Attivo l'agente OROSCOPO...")
                 )
             else:
-                state["selected_agent"] = "NONE"
+                # Default a GENERAL per qualsiasi altra cosa
+                state["selected_agent"] = "GENERAL"
                 state["messages"].append(
-                    AIMessage(content="Non riesco a identificare un agente appropriato per la tua richiesta.")
+                    AIMessage(content="Attivo l'agente conversazionale...")
                 )
     
     except Exception as e:
-        state["selected_agent"] = "NONE"
+        # In caso di errore, usa GENERAL come fallback
+        state["selected_agent"] = "GENERAL"
         state["messages"].append(
-            AIMessage(content=f"Errore nel routing: {str(e)}. Controlla la tua API key di OpenAI.")
+            AIMessage(content=f"Errore nel routing: {str(e)}. Uso l'agente conversazionale.")
         )
     
     return state
@@ -167,9 +176,30 @@ def execute_horoscope_agent(state: SupervisorState) -> SupervisorState:
     return state
 
 
+def execute_general_agent(state: SupervisorState) -> SupervisorState:
+    """Esegue l'agente conversazionale generale"""
+    if state.get("selected_agent") != "GENERAL":
+        return state
+    
+    try:
+        result = run_general_agent(state["user_query"])
+        state["agent_result"] = result
+        
+        # Aggiungi i messaggi dell'agente general
+        for msg in result.get("messages", []):
+            state["messages"].append(AIMessage(content=msg.content))
+            
+    except Exception as e:
+        state["messages"].append(
+            AIMessage(content=f"Errore nell'esecuzione dell'agente CONVERSAZIONALE: {str(e)}")
+        )
+    
+    return state
+
+
 def handle_unsupported_agent(state: SupervisorState) -> SupervisorState:
     """Gestisce gli agenti non ancora disponibili"""
-    if state.get("selected_agent") in ["YOUTUBE", "BASIC"]:
+    if state.get("selected_agent") in ["WIKIPEDIA", "BASIC"]:
         agent_name = state["selected_agent"]
         state["messages"].append(
             AIMessage(content=f"L'agente {agent_name} non è ancora disponibile. Scusa per il disagio!")
@@ -196,6 +226,7 @@ def build_supervisor_agent():
     workflow.add_node("router", supervisor_router)
     workflow.add_node("weather_agent", execute_weather_agent)
     workflow.add_node("horoscope_agent", execute_horoscope_agent)
+    workflow.add_node("general_agent", execute_general_agent)
     workflow.add_node("unsupported", handle_unsupported_agent)
     
     # Definiamo il flusso
@@ -206,13 +237,14 @@ def build_supervisor_agent():
         "router",
         lambda state: "weather_agent" if state.get("selected_agent") == "WEATHER" 
                      else "horoscope_agent" if state.get("selected_agent") == "HOROSCOPE"
-                     else "unsupported" if state.get("selected_agent") in ["YOUTUBE", "BASIC"]
-                     else "end",
+                     else "general_agent" if state.get("selected_agent") == "GENERAL"
+                     else "unsupported" if state.get("selected_agent") in ["WIKIPEDIA", "BASIC"]
+                     else "general_agent",  # Default a GENERAL invece di END
         {
             "weather_agent": "weather_agent",
             "horoscope_agent": "horoscope_agent",
-            "unsupported": "unsupported",
-            "end": END
+            "general_agent": "general_agent",
+            "unsupported": "unsupported"
         }
     )
     
@@ -221,6 +253,9 @@ def build_supervisor_agent():
     
     # Da horoscope_agent a END
     workflow.add_edge("horoscope_agent", END)
+    
+    # Da general_agent a END
+    workflow.add_edge("general_agent", END)
     
     # Da unsupported a END
     workflow.add_edge("unsupported", END)
@@ -324,12 +359,14 @@ def main():
     print("Agenti disponibili:")
     print("  • METEO - Ottiene dati meteorologici")
     print("  • OROSCOPO - Fornisce oroscopi tradotti in italiano")
-    print("  • YOUTUBE - Ricerca video (prossimamente)")
+    print("  • GENERAL - Gestisce conversazioni, saluti e domande generiche")
+    print("  • WIKIPEDIA - Ricerca informazioni (prossimamente)")
     print("  • BASIC - Calendario, Calcolatrice, Traduttore (prossimamente)")
     print("\nComandi speciali:")
     print("  - 'grafo' - Visualizza il grafo del supervisore")
     print("  - 'grafo-meteo' - Visualizza il grafo dell'agente meteo")
     print("  - 'grafo-oroscopo' - Visualizza il grafo dell'agente oroscopo")
+    print("  - 'grafo-general' - Visualizza il grafo dell'agente conversazionale")
     print("  - 'esci' - Esce dall'applicazione\n")
     
     while True:
@@ -355,6 +392,13 @@ def main():
             print("\n")
             from agents.horoscope_agent import visualize_graph as visualize_horoscope_graph
             visualize_horoscope_graph()
+            print("\n")
+            continue
+        
+        if user_query.lower() == "grafo-general":
+            print("\n")
+            from agents.general_agent import visualize_graph as visualize_general_graph
+            visualize_general_graph()
             print("\n")
             continue
         

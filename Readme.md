@@ -3,15 +3,17 @@
 
 Tramite lang-graph verrà implemtato un sistema multiagent alexa like che risponderà ai seguenti compiti:
 1. Invocazione meteo tramite scaricamento dati da API di meteo.
-2. Oroscopo tramite API Aztro con traduzione automatica
-3. Calendario
-4. Calcolatrice
-5. Traduttore
+2. Oroscopo con traduzione automatica
+3. Conversazioni generiche, saluti e small talk
+4. Calendario (prossimamente)
+5. Calcolatrice (prossimamente)
+6. Traduttore (prossimamente)
 
-Saranno implementati tre agenti: 
+Saranno implementati quattro agenti: 
 - **Meteo**: Utilizza Open-Meteo API per ottenere previsioni meteo fino a 7 giorni
 - **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali, mensili e annuali con traduzione automatica italiano-inglese-italiano tramite OpenAI
-- **Funzionalità Base**: quest'ultimo agente avrà a disposizione tool per:
+- **General**: Gestisce conversazioni generiche, saluti, presentazioni e qualsiasi richiesta non tecnica utilizzando OpenAI GPT-3.5
+- **Funzionalità Base** (prossimamente): quest'ultimo agente avrà a disposizione tool per:
     - Calendario
     - Calcolatrice
     - Traduttore
@@ -87,3 +89,43 @@ result = run_horoscope_agent("Qual è l'oroscopo dell'ariete oggi?")
 for msg in result["messages"]:
     print(msg.content)
 ```
+
+## Agente General - Dettagli Implementazione
+
+L'agente conversazionale generale gestisce interazioni naturali e funge da fallback per qualsiasi richiesta non tecnica.
+
+### Funzionalità
+1. **Conversazioni naturali**: Utilizza OpenAI GPT-3.5 con temperatura più alta (0.7) per risposte più creative e naturali
+2. **Personalità definita**: Si presenta come "Alexa", assistente amichevole e professionale
+3. **Fallback intelligente**: Gestisce automaticamente tutto ciò che non è coperto dagli agenti specializzati
+4. **Risposte concise**: Mantiene le risposte brevi (2-4 frasi) per una migliore esperienza conversazionale
+
+### Tipologie di Richieste Gestite
+- **Saluti**: Ciao, buongiorno, buonasera, arrivederci
+- **Presentazioni**: Chi sei? Cosa sai fare? Come funzioni?
+- **Ringraziamenti**: Grazie, ti ringrazio, ottimo lavoro
+- **Small talk**: Come stai? Che tempo fa? (conversazioni generiche)
+- **Domande sull'assistente**: Quali sono le tue funzionalità? Come posso usarti?
+- **Fallback**: Qualsiasi richiesta non coperta da meteo, oroscopo o altri agenti specializzati
+
+### Caratteristiche della Personalità
+- 🤝 Cordiale e professionale
+- 💬 Comunicazione chiara e concisa
+- 🇮🇹 Parla sempre in italiano
+- ℹ️ Disponibile ad aiutare e informare
+
+### Esempio di utilizzo
+```python
+from agents.general_agent import run_general_agent
+
+# Query di esempio
+result = run_general_agent("Ciao! Come stai?")
+for msg in result["messages"]:
+    print(msg.content)
+```
+
+### Integrazione con il Sistema
+L'agente General è integrato nel supervisore come:
+- **Agente predefinito**: Utilizzato quando nessun altro agente è appropriato
+- **Gestione errori**: Attivato in caso di errori nel routing
+- **Sempre disponibile**: Non può mai risultare "non disponibile"
