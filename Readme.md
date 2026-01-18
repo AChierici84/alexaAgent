@@ -5,13 +5,15 @@ Tramite lang-graph verrà implemtato un sistema multiagent alexa like che rispon
 1. Invocazione meteo tramite scaricamento dati da API di meteo.
 2. Oroscopo con traduzione automatica
 3. Conversazioni generiche, saluti e small talk
-4. Calendario (prossimamente)
-5. Calcolatrice (prossimamente)
-6. Traduttore (prossimamente)
+4. Ricerca informazioni enciclopediche su Wikipedia
+5. Calendario (prossimamente)
+6. Calcolatrice (prossimamente)
+7. Traduttore (prossimamente)
 
 Saranno implementati quattro agenti: 
 - **Meteo**: Utilizza Open-Meteo API per ottenere previsioni meteo fino a 7 giorni
 - **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali, mensili e annuali con traduzione automatica italiano-inglese-italiano tramite OpenAI
+- **Wikipedia**: Cerca informazioni enciclopediche su Wikipedia in italiano e utilizza OpenAI per rispondere alle domande
 - **General**: Gestisce conversazioni generiche, saluti, presentazioni e qualsiasi richiesta non tecnica utilizzando OpenAI GPT-3.5
 - **Funzionalità Base** (prossimamente): quest'ultimo agente avrà a disposizione tool per:
     - Calendario
@@ -129,3 +131,43 @@ L'agente General è integrato nel supervisore come:
 - **Agente predefinito**: Utilizzato quando nessun altro agente è appropriato
 - **Gestione errori**: Attivato in caso di errori nel routing
 - **Sempre disponibile**: Non può mai risultare "non disponibile"
+
+## Agente Wikipedia - Dettagli Implementazione
+
+L'agente Wikipedia cerca e recupera informazioni enciclopediche da Wikipedia in italiano.
+
+### Funzionalità
+1. **Identificazione domande enciclopediche**: Riconosce automaticamente domande che richiedono informazioni enciclopediche
+2. **Estrazione termini di ricerca**: Utilizza OpenAI per estrarre i termini chiave dalla domanda
+3. **Ricerca Wikipedia**: Cerca su Wikipedia italiana (it.wikipedia.org) senza bisogno di API key
+4. **Recupero contenuto**: Estrae il contenuto della pagina più rilevante
+5. **Risposta intelligente**: Utilizza OpenAI per rispondere alla domanda basandosi sul contenuto Wikipedia
+
+### Tipologie di Domande Gestite
+- **Personaggi storici**: "Chi era Leonardo da Vinci?"
+- **Definizioni**: "Cos'è la fotosintesi?"
+- **Eventi storici**: "Quando è stata scoperta l'America?"
+- **Luoghi e monumenti**: "Dimmi qualcosa sulla Torre di Pisa"
+- **Cultura generale**: Qualsiasi domanda enciclopedica
+
+### API Utilizzate
+- **Wikipedia API**: Gratuita, nessuna autenticazione richiesta
+- **Lingua**: Italiano (it.wikipedia.org)
+- **OpenAI**: Per estrazione termini e generazione risposte
+
+### Gestione Errori
+- Gestisce automaticamente disambiguazioni
+- Prova risultati alternativi se una pagina non è trovata
+- Limita il contenuto a ~4000 caratteri per efficienza
+
+### Esempio di utilizzo
+```python
+from agents.wikipedia_agent import run_wikipedia_agent
+
+# Query di esempio
+result = run_wikipedia_agent("Chi era Leonardo da Vinci?")
+print(result['response'])
+```
+
+### Integrazione con il Sistema
+L'agente Wikipedia è attivato dal supervisore quando rileva domande enciclopediche e fornisce risposte basate su fatti verificabili da Wikipedia.

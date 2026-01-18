@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from agents.weather_agent import run_weather_agent, visualize_graph
 from agents.horoscope_agent import run_horoscope_agent
 from agents.general_agent import run_general_agent
+from agents.wikipedia_agent import run_wikipedia_agent
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -58,8 +59,8 @@ def supervisor_router(state: SupervisorState) -> SupervisorState:
 Agenti disponibili:
 1. WEATHER - Specializzato in: meteo, condizioni atmosferiche, pioggia, neve, temperatura, umidità, sole, vento, clima
 2. HOROSCOPE - Specializzato in: oroscopo, segni zodiacali, previsioni astrologiche
-3. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti
-4. WIKIPEDIA - Specializzato in: ricerca di voci, informazioni enciclopediche (non ancora disponibile)
+3. WIKIPEDIA - Specializzato in: informazioni enciclopediche, domande su personaggi storici, eventi, definizioni, concetti scientifici, luoghi, cultura generale, fatti storici, biografie
+4. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti
 5. BASIC - Specializzato in: calendario, calcolatrice, traduttore (non ancora disponibile)
 
 IMPORTANTE:
@@ -78,7 +79,7 @@ Rispondi in JSON con il seguente formato:
     "reason": "breve spiegazione"
 }}
 
-Usa GENERAL per tutto ciò che non è meteo, oroscopo, o funzionalità specifiche."""
+Usa GENERAL per tutto ciò che non è meteo, oroscopo, domande enciclopediche o funzionalità specifiche."""
         
         # Chiama OpenAI
         response = llm.invoke([
@@ -197,9 +198,30 @@ def execute_general_agent(state: SupervisorState) -> SupervisorState:
     return state
 
 
+def execute_wikipedia_agent(state: SupervisorState) -> SupervisorState:
+    """Esegue l'agente Wikipedia"""
+    if state.get("selected_agent") != "WIKIPEDIA":
+        return state
+    
+    try:
+        result = run_wikipedia_agent(state["user_query"])
+        state["agent_result"] = result
+        
+        # Aggiungi i messaggi dell'agente Wikipedia
+        for msg in result.get("messages", []):
+            state["messages"].append(AIMessage(content=msg.content))
+            
+    except Exception as e:
+        state["messages"].append(
+            AIMessage(content=f"Errore nell'esecuzione dell'agente WIKIPEDIA: {str(e)}")
+        )
+    
+    return state
+
+
 def handle_unsupported_agent(state: SupervisorState) -> SupervisorState:
     """Gestisce gli agenti non ancora disponibili"""
-    if state.get("selected_agent") in ["WIKIPEDIA", "BASIC"]:
+    if state.get("selected_agent") in ["BASIC"]:
         agent_name = state["selected_agent"]
         state["messages"].append(
             AIMessage(content=f"L'agente {agent_name} non è ancora disponibile. Scusa per il disagio!")
@@ -227,6 +249,7 @@ def build_supervisor_agent():
     workflow.add_node("weather_agent", execute_weather_agent)
     workflow.add_node("horoscope_agent", execute_horoscope_agent)
     workflow.add_node("general_agent", execute_general_agent)
+    workflow.add_node("wikipedia_agent", execute_wikipedia_agent)
     workflow.add_node("unsupported", handle_unsupported_agent)
     
     # Definiamo il flusso
@@ -237,12 +260,14 @@ def build_supervisor_agent():
         "router",
         lambda state: "weather_agent" if state.get("selected_agent") == "WEATHER" 
                      else "horoscope_agent" if state.get("selected_agent") == "HOROSCOPE"
+                     else "wikipedia_agent" if state.get("selected_agent") == "WIKIPEDIA"
                      else "general_agent" if state.get("selected_agent") == "GENERAL"
-                     else "unsupported" if state.get("selected_agent") in ["WIKIPEDIA", "BASIC"]
+                     else "unsupported" if state.get("selected_agent") in ["BASIC"]
                      else "general_agent",  # Default a GENERAL invece di END
         {
             "weather_agent": "weather_agent",
             "horoscope_agent": "horoscope_agent",
+            "wikipedia_agent": "wikipedia_agent",
             "general_agent": "general_agent",
             "unsupported": "unsupported"
         }
@@ -256,6 +281,9 @@ def build_supervisor_agent():
     
     # Da general_agent a END
     workflow.add_edge("general_agent", END)
+    
+    # Da wikipedia_agent a END
+    workflow.add_edge("wikipedia_agent", END)
     
     # Da unsupported a END
     workflow.add_edge("unsupported", END)
@@ -360,7 +388,7 @@ def main():
     print("  • METEO - Ottiene dati meteorologici")
     print("  • OROSCOPO - Fornisce oroscopi tradotti in italiano")
     print("  • GENERAL - Gestisce conversazioni, saluti e domande generiche")
-    print("  • WIKIPEDIA - Ricerca informazioni (prossimamente)")
+    print("  • WIKIPEDIA - Ricerca informazioni enciclopediche")
     print("  • BASIC - Calendario, Calcolatrice, Traduttore (prossimamente)")
     print("\nComandi speciali:")
     print("  - 'grafo' - Visualizza il grafo del supervisore")
