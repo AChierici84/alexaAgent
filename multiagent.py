@@ -17,6 +17,7 @@ from agents.horoscope_agent import run_horoscope_agent
 from agents.general_agent import run_general_agent
 from agents.wikipedia_agent import run_wikipedia_agent
 from agents.calculator_agent import run_calculator_agent
+from agents.translator_agent import run_translator_agent
 from conversation_manager import conversation_manager
 
 # Carica le variabili d'ambiente
@@ -94,9 +95,11 @@ Agenti disponibili:
 2. HOROSCOPE - Specializzato in: oroscopo, segni zodiacali, previsioni astrologiche
 3. WIKIPEDIA - Specializzato in: informazioni enciclopediche, domande su personaggi storici, eventi, definizioni, concetti scientifici, luoghi, cultura generale, fatti storici, biografie
 4. CALCULATOR - Specializzato in: calcoli matematici, aritmetica, percentuali, conversioni unità (km/miglia, kg/libbre, celsius/fahrenheit), equazioni
-5. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti, calendario
+5. TRANSLATOR - Specializzato in: traduzioni tra lingue, tradurre parole/frasi, "come si dice", "che significa"
+6. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti, calendario
 
 IMPORTANTE:
+- Usa TRANSLATOR per: "traduci [testo] in [lingua]", "come si dice [testo] in [lingua]", "che significa [testo]"
 - Usa CALCULATOR per: "quanto fa 2+2", "calcola il 20% di 100", "converti 10 km in miglia", "risolvi 2x+5=13"
 - Usa GENERAL per: saluti (ciao, buongiorno), presentazioni (chi sei, cosa fai), ringraziamenti, conversazioni generiche
 - Usa GENERAL come fallback per qualsiasi cosa non gestita dagli altri agenti
@@ -108,12 +111,12 @@ Query utente: {user_query}
 
 Rispondi in JSON con il seguente formato:
 {{
-    "agent": "WEATHER" | "HOROSCOPE" | "GENERAL" | "WIKIPEDIA" | "CALCULATOR",
+    "agent": "WEATHER" | "HOROSCOPE" | "GENERAL" | "WIKIPEDIA" | "CALCULATOR" | "TRANSLATOR",
     "confidence": 0.0-1.0,
     "reason": "breve spiegazione"
 }}
 
-Usa GENERAL per tutto ciò che non è meteo, oroscopo, domande enciclopediche, calcoli matematici o funzionalità specifiche."""
+Usa GENERAL per tutto ciò che non è meteo, oroscopo, domande enciclopediche, calcoli matematici, traduzioni o funzionalità specifiche."""
         
         # Chiama OpenAI
         response = llm.invoke([
@@ -274,6 +277,27 @@ def execute_calculator_agent(state: SupervisorState) -> SupervisorState:
     return state
 
 
+def execute_translator_agent(state: SupervisorState) -> SupervisorState:
+    """Esegue l'agente traduttore"""
+    if state.get("selected_agent") != "TRANSLATOR":
+        return state
+    
+    try:
+        result = run_translator_agent(state["user_query"])
+        state["agent_result"] = result
+        
+        # Aggiungi i messaggi dell'agente translator
+        for msg in result.get("messages", []):
+            state["messages"].append(AIMessage(content=msg.content))
+            
+    except Exception as e:
+        state["messages"].append(
+            AIMessage(content=f"Errore nell'esecuzione dell'agente TRADUTTORE: {str(e)}")
+        )
+    
+    return state
+
+
 def handle_unsupported_agent(state: SupervisorState) -> SupervisorState:
     """Gestisce gli agenti non ancora disponibili"""
     if state.get("selected_agent") in ["BASIC"]:
@@ -306,6 +330,7 @@ def build_supervisor_agent():
     workflow.add_node("general_agent", execute_general_agent)
     workflow.add_node("wikipedia_agent", execute_wikipedia_agent)
     workflow.add_node("calculator_agent", execute_calculator_agent)
+    workflow.add_node("translator_agent", execute_translator_agent)
     workflow.add_node("unsupported", handle_unsupported_agent)
     
     # Definiamo il flusso
@@ -318,6 +343,7 @@ def build_supervisor_agent():
                      else "horoscope_agent" if state.get("selected_agent") == "HOROSCOPE"
                      else "wikipedia_agent" if state.get("selected_agent") == "WIKIPEDIA"
                      else "calculator_agent" if state.get("selected_agent") == "CALCULATOR"
+                     else "translator_agent" if state.get("selected_agent") == "TRANSLATOR"
                      else "general_agent" if state.get("selected_agent") == "GENERAL"
                      else "unsupported" if state.get("selected_agent") in ["BASIC"]
                      else "general_agent",  # Default a GENERAL invece di END
@@ -326,6 +352,7 @@ def build_supervisor_agent():
             "horoscope_agent": "horoscope_agent",
             "wikipedia_agent": "wikipedia_agent",
             "calculator_agent": "calculator_agent",
+            "translator_agent": "translator_agent",
             "general_agent": "general_agent",
             "unsupported": "unsupported"
         }
@@ -345,6 +372,9 @@ def build_supervisor_agent():
     
     # Da calculator_agent a END
     workflow.add_edge("calculator_agent", END)
+    
+    # Da translator_agent a END
+    workflow.add_edge("translator_agent", END)
     
     # Da unsupported a END
     workflow.add_edge("unsupported", END)
@@ -451,12 +481,14 @@ def main():
     print("  • GENERAL - Gestisce conversazioni, saluti e domande generiche")
     print("  • WIKIPEDIA - Ricerca informazioni enciclopediche")
     print("  • CALCULATOR - Calcoli matematici, conversioni, percentuali")
+    print("   • TRANSLATOR - Traduzioni tra oltre 40 lingue")
     print("\nComandi speciali:")
-    print("  - 'grafo' - Visualizza il grafo del supervisore")
-    print("  - 'grafo-meteo' - Visualizza il grafo dell'agente meteo")
-    print("  - 'grafo-oroscopo' - Visualizza il grafo dell'agente oroscopo")
-    print("  - 'grafo-general' - Visualizza il grafo dell'agente conversazionale")
-    print("  - 'grafo-calculator' - Visualizza il grafo dell'agente calcolatore")
+    print("   - 'grafo' - Visualizza il grafo del supervisore")
+    print("   - 'grafo-meteo' - Visualizza il grafo dell'agente meteo")
+    print("   - 'grafo-oroscopo' - Visualizza il grafo dell'agente oroscopo")
+    print("   - 'grafo-general' - Visualizza il grafo dell'agente conversazionale")
+    print("   - 'grafo-calculator' - Visualizza il grafo dell'agente calcolatore")
+    print("   - 'grafo-translator' - Visualizza il grafo dell'agente traduttore")
     print("  - 'esci' - Esce dall'applicazione\n")
     
     while True:
@@ -496,6 +528,13 @@ def main():
             print("\n")
             from agents.calculator_agent import visualize_graph as visualize_calculator_graph
             visualize_calculator_graph()
+            print("\n")
+            continue
+        
+        if user_query.lower() == "grafo-translator":
+            print("\n")
+            from agents.translator_agent import visualize_graph as visualize_translator_graph
+            visualize_translator_graph()
             print("\n")
             continue
         

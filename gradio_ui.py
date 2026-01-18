@@ -126,6 +126,7 @@ def create_interface():
             - **⭐ Oroscopo**: Oroscopi giornalieri, settimanali e mensili
             - **📚 Wikipedia**: Informazioni enciclopediche
             - **🔢 Calculator**: Calcoli matematici, conversioni, percentuali
+            - **🌍 Translator**: Traduzioni tra oltre 40 lingue
             - **💬 General**: Conversazioni generiche, saluti e small talk
             
             ### Gestione Conversazionale
@@ -167,6 +168,8 @@ def create_interface():
                         ["Quanto fa 23 * 45?"],
                         ["Converti 100 km in miglia"],
                         ["Il 20% di 150"],
+                        ["Traduci hello in italiano"],
+                        ["Come si dice buongiorno in francese?"],
                         ["Ciao! Come stai?"],
                         ["Grazie mille!"]
                     ],
@@ -185,6 +188,7 @@ def create_interface():
                     - Oroscopo ✅
                     - Wikipedia ✅
                     - Calculator ✅
+                    - Translator ✅
                     - General ✅
                     
                     **Funzionalità**:

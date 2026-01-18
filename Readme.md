@@ -2,12 +2,12 @@
 ## Multiagente con supervisore
 
 Tramite lang-graph verrà implemtato un sistema multiagent alexa like che risponderà ai seguenti compiti:
-1. Invocazione meteo tramite scaricamento dati da API di meteo.
+1. Invocazione meteo tramite scaricamento dati da API di meteo
 2. Oroscopo con traduzione automatica
 3. Conversazioni generiche, saluti e small talk 
 4. Ricerca informazioni enciclopediche su Wikipedia
-5. Calcolatrice (prossimamente)
-6. Traduttore (prossimamente)
+5. **Calcolatrice matematica** - Calcoli, conversioni unità, percentuali, equazioni
+6. **Traduttore multilingua** - Traduzioni tra oltre 40 lingue
 
 ### Gestione Conversazionale Intelligente
 Il sistema include una **gestione dello stato conversazionale** che permette agli agenti di mantenere il contesto tra richieste successive:
@@ -61,15 +61,13 @@ for msg in result["messages"]:
     print(msg.content)
 ```
 
-Saranno implementati quattro agenti: 
+Saranno implementati sei agenti: 
 - **Meteo**: Utilizza Open-Meteo API per ottenere previsioni meteo fino a 7 giorni
-- **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali, mensili e annuali con traduzione automatica italiano-inglese-italiano tramite OpenAI
+- **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali e mensili con traduzione automatica italiano-inglese-italiano tramite OpenAI
 - **Wikipedia**: Cerca informazioni enciclopediche su Wikipedia in italiano e utilizza OpenAI per rispondere alle domande
+- **Calculator**: Parser matematico con sympy per calcoli precisi, conversioni unità, percentuali ed equazioni
+- **Translator**: Traduttore multilingua che supporta oltre 40 lingue tramite OpenAI
 - **General**: Gestisce conversazioni generiche, saluti, presentazioni e qualsiasi richiesta non tecnica utilizzando OpenAI GPT-3.5
-- **Funzionalità Base** (prossimamente): quest'ultimo agente avrà a disposizione tool per:
-    - Calendario
-    - Calcolatrice
-    - Traduttore
 
 ## Agente Meteo - Dettagli Implementazione
 
@@ -223,3 +221,130 @@ print(result['response'])
 
 ### Integrazione con il Sistema
 L'agente Wikipedia è attivato dal supervisore quando rileva domande enciclopediche e fornisce risposte basate su fatti verificabili da Wikipedia.
+## Agente Calculator - Dettagli Implementazione
+
+L'agente Calculator esegue calcoli matematici precisi e affidabili utilizzando il parser matematico sympy.
+
+### Funzionalità
+1. **Parser matematico**: Utilizza sympy per calcoli deterministici e precisi (nessun errore LLM)
+2. **Estrazione intelligente**: OpenAI estrae l'espressione matematica dalla query in linguaggio naturale
+3. **Supporto operazioni multiple**: Aritmetica, percentuali, conversioni unità, equazioni
+4. **Conversioni unità**: Lunghezza, peso, temperatura, volume
+
+### Tipi di Operazioni Supportate
+
+#### 1. Calcoli Aritmetici
+- Operazioni base: `+`, `-`, `*`, `/`, `**` (potenza)
+- Parentesi e precedenza operatori
+- Funzioni matematiche: sin, cos, radici, logaritmi
+
+**Esempi:**
+- "quanto fa 2+2"
+- "calcola (15 + 23) * 2"
+- "qual è la radice quadrata di 144"
+
+#### 2. Percentuali
+- Calcolo percentuale di un numero
+- Percentuali di sconto
+
+**Esempi:**
+- "il 20% di 150"
+- "calcola il 15% di sconto su 50 euro"
+
+#### 3. Conversioni Unità
+**Lunghezza:**
+- km ↔ miglia (mi)
+- metri (m) ↔ piedi (ft)
+- centimetri (cm) ↔ pollici (in)
+
+**Peso:**
+- chilogrammi (kg) ↔ libbre (lb)
+- grammi (g) ↔ once (oz)
+
+**Temperatura:**
+- Celsius (c) ↔ Fahrenheit (f)
+
+**Volume:**
+- litri (l) ↔ galloni (gal)
+
+**Esempi:**
+- "converti 100 km in miglia"
+- "quanti gradi fahrenheit sono 25 celsius"
+- "converti 5 kg in libbre"
+
+#### 4. Equazioni
+- Risoluzione equazioni lineari e quadratiche
+- Supporto variabile x
+
+**Esempi:**
+- "risolvi 2x + 5 = 13"
+- "trova x: x^2 = 16"
+
+### Vantaggi rispetto a LLM
+- ✅ **Precisione**: Calcoli sempre corretti, nessun errore di arrotondamento
+- ✅ **Velocità**: Più rapido di una chiamata API
+- ✅ **Costi ridotti**: Nessuna chiamata LLM per il calcolo stesso
+- ✅ **Affidabilità**: Risultati deterministici
+
+### Esempio di utilizzo
+```python
+from agents.calculator_agent import run_calculator_agent
+
+# Query di esempio
+result = run_calculator_agent("quanto fa 23 * 45")
+for msg in result["messages"]:
+    print(msg.content)
+```
+
+### Integrazione con il Sistema
+L'agente Calculator è attivato dal supervisore quando rileva richieste di calcoli matematici, conversioni o percentuali.
+
+## Agente Translator - Dettagli Implementazione
+
+L'agente Translator traduce testo tra oltre 40 lingue diverse utilizzando OpenAI per traduzioni di alta qualità.
+
+### Funzionalità
+1. **Estrazione intelligente**: OpenAI estrae testo da tradurre, lingua origine e destinazione
+2. **Rilevamento automatico**: Identifica automaticamente la lingua di origine se non specificata
+3. **Traduzioni fluenti**: Utilizza OpenAI GPT-3.5 per traduzioni naturali e contestuali
+4. **Supporto multilingua**: Oltre 40 lingue supportate
+
+### Lingue Supportate (principali)
+- **Europee**: Italiano, Inglese, Francese, Spagnolo, Tedesco, Portoghese, Russo, Olandese, Polacco, Greco, Svedese, Norvegese, Danese, Finlandese, Ceco, Rumeno, Ungherese, Turco, Ucraino, Catalano, Croato, Bulgaro, Slovacco, Sloveno, Serbo, Lituano, Lettone, Estone
+- **Asiatiche**: Cinese, Giapponese, Coreano, Hindi, Thai, Vietnamita, Indonesiano, Malese
+- **Medio Oriente**: Arabo, Ebraico
+
+### Pattern di Richiesta Supportati
+- "traduci [testo] in [lingua]"
+- "come si dice [testo] in [lingua]"
+- "che significa [testo]" (traduce in italiano)
+- "traduci in [lingua]: [testo]"
+
+### Caratteristiche
+- **Traduzioni accurate**: Mantiene il significato e il contesto
+- **Fluenza naturale**: Non traduzioni letterali ma contestualmente appropriate
+- **Formattazione elegante**: Mostra traduzione e testo originale
+- **Supporto frasi lunghe**: Può tradurre da singole parole a paragrafi interi
+
+### Esempi di utilizzo
+
+**Query:**
+```python
+from agents.translator_agent import run_translator_agent
+
+# Esempi
+result = run_translator_agent("traduci hello in italiano")
+# Output: "ciao"
+
+result = run_translator_agent("come si dice buongiorno in francese")
+# Output: "bonjour"
+
+result = run_translator_agent("traduci in inglese: dove si trova la stazione?")
+# Output: "where is the station?"
+
+result = run_translator_agent("che significa thank you")
+# Output: "grazie"
+```
+
+### Integrazione con il Sistema
+L'agente Translator è attivato dal supervisore quando rileva richieste di traduzione linguistica.
