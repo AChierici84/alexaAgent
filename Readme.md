@@ -101,18 +101,18 @@ L'agente conversazionale generale gestisce interazioni naturali e funge da fallb
 4. **Risposte concise**: Mantiene le risposte brevi (2-4 frasi) per una migliore esperienza conversazionale
 
 ### Tipologie di Richieste Gestite
-- **Saluti**: Ciao, buongiorno, buonasera, arrivederci
-- **Presentazioni**: Chi sei? Cosa sai fare? Come funzioni?
-- **Ringraziamenti**: Grazie, ti ringrazio, ottimo lavoro
-- **Small talk**: Come stai? Che tempo fa? (conversazioni generiche)
-- **Domande sull'assistente**: Quali sono le tue funzionalità? Come posso usarti?
+- **Saluti**
+- **Presentazioni**
+- **Ringraziamenti**
+- **Small talk**
+- **Domande sull'assistente**
 - **Fallback**: Qualsiasi richiesta non coperta da meteo, oroscopo o altri agenti specializzati
 
 ### Caratteristiche della Personalità
-- 🤝 Cordiale e professionale
-- 💬 Comunicazione chiara e concisa
-- 🇮🇹 Parla sempre in italiano
-- ℹ️ Disponibile ad aiutare e informare
+- Cordiale e professionale
+- Comunicazione chiara e concisa
+- Parla sempre in italiano
+- Disponibile ad aiutare e informare
 
 ### Esempio di utilizzo
 ```python
