@@ -342,6 +342,7 @@ def fetch_weather(state: AgentState) -> AgentState:
             state["weather_data"] = weather_data
             
             # Crea la risposta formattata
+            response_text = ""  # Inizializza response_text
             response_text += f"METEO A {location.upper()}\n"
             response_text += f"{time_label.capitalize()} ({state.get('date_str')})\n"
             response_text += f"Coordinate: {latitude:.4f}°N, {longitude:.4f}°E\n\n"
