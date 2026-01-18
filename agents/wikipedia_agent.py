@@ -370,3 +370,8 @@ if __name__ == "__main__":
         print(f"Pagina: {result['page_title']}")
         print(f"Risposta: {result['response']}")
         print("=" * 50)
+        
+    # Visualizza il grafo
+    print("\n" + "="*60)
+    visualize_graph()
+    print("\n" + "="*60)
