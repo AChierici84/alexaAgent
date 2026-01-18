@@ -123,8 +123,9 @@ def create_interface():
             Il sistema utilizza diversi agenti specializzati:
             
             - **🌤️ Meteo**: Previsioni meteorologiche fino a 7 giorni
-            - **⭐ Oroscopo**: Oroscopi giornalieri, settimanali, mensili e annuali
+            - **⭐ Oroscopo**: Oroscopi giornalieri, settimanali e mensili
             - **📚 Wikipedia**: Informazioni enciclopediche
+            - **🔢 Calculator**: Calcoli matematici, conversioni, percentuali
             - **💬 General**: Conversazioni generiche, saluti e small talk
             
             ### Gestione Conversazionale
@@ -163,6 +164,9 @@ def create_interface():
                         ["Oroscopo della settimana"],
                         ["Chi era Leonardo da Vinci?"],
                         ["Cos'è la fotosintesi?"],
+                        ["Quanto fa 23 * 45?"],
+                        ["Converti 100 km in miglia"],
+                        ["Il 20% di 150"],
                         ["Ciao! Come stai?"],
                         ["Grazie mille!"]
                     ],
@@ -180,6 +184,7 @@ def create_interface():
                     - Meteo ✅
                     - Oroscopo ✅
                     - Wikipedia ✅
+                    - Calculator ✅
                     - General ✅
                     
                     **Funzionalità**:
