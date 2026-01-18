@@ -16,6 +16,7 @@ from agents.weather_agent import run_weather_agent, visualize_graph
 from agents.horoscope_agent import run_horoscope_agent
 from agents.general_agent import run_general_agent
 from agents.wikipedia_agent import run_wikipedia_agent
+from conversation_manager import conversation_manager
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -33,6 +34,7 @@ def supervisor_router(state: SupervisorState) -> SupervisorState:
     """
     Supervisore che decide quale agente attivare basandosi sulla query dell'utente
     Usa OpenAI per una decisione intelligente
+    Gestisce anche le richieste in sospeso (quando l'agente ha chiesto informazioni aggiuntive)
     
     Args:
         state: Lo stato del supervisore
@@ -41,6 +43,36 @@ def supervisor_router(state: SupervisorState) -> SupervisorState:
         Lo stato aggiornato con l'agente selezionato
     """
     user_query = state["user_query"]
+    
+    # PRIMA PRIORITÀ: Controlla se c'è una richiesta in sospeso
+    has_pending = conversation_manager.has_pending_request()
+    
+    if has_pending:
+        print(f"[DEBUG] Rilevata richiesta in sospeso")
+        pending_request = conversation_manager.get_pending_request()
+        
+        # Controllo di sicurezza: verifica che pending_request non sia None
+        if pending_request:
+            agent_type = pending_request.get("agent_type")
+            print(f"[DEBUG] Agente precedente: {agent_type}")
+            print(f"[DEBUG] Nuova informazione: {user_query}")
+            
+            # Completa la richiesta con la nuova informazione
+            completed_query = conversation_manager.complete_pending_request(user_query)
+            
+            if completed_query:
+                print(f"[DEBUG] Query completata: {completed_query}")
+                state["user_query"] = completed_query
+                state["selected_agent"] = agent_type
+                
+                # Aggiungiamo il messaggio dell'utente DOPO aver modificato la query
+                state["messages"].append(HumanMessage(content=user_query))
+                state["messages"].append(
+                    AIMessage(content=f"Ho completato la richiesta precedente con '{user_query}'. Procedo con l'agente {agent_type}...")
+                )
+                return state
+        else:
+            print("[DEBUG] pending_request è None!")
     
     # Aggiungiamo il messaggio dell'utente
     state["messages"].append(HumanMessage(content=user_query))

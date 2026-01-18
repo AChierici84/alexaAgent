@@ -12,6 +12,12 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 import operator
 from dotenv import load_dotenv
+import sys
+from pathlib import Path
+
+# Aggiungi il path parent per importare conversation_manager
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from conversation_manager import conversation_manager
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -140,6 +146,15 @@ Se il periodo non è riconoscibile rispondi con "time_period": "daily"
         if zodiac_sign.upper() == "NESSUNO" or zodiac_sign not in ZODIAC_SIGNS_IT_EN:
             state["zodiac_sign"] = None
             state["zodiac_sign_en"] = None
+            
+            # Salva la richiesta incompleta
+            conversation_manager.save_pending_request(
+                agent_type="HOROSCOPE",
+                original_query=query,
+                missing_info="zodiac_sign",
+                partial_data={"time_description": time_description, "time_period": time_period}
+            )
+            
             state["messages"].append(
                 AIMessage(content=f"Non ho riconosciuto un segno zodiacale nella tua richiesta. Puoi dirmi per quale segno vuoi l'oroscopo? (es. {', '.join(list(ZODIAC_SIGNS_IT_EN.keys())[:3])}, ...)")
             )

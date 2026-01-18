@@ -16,6 +16,12 @@ from dotenv import load_dotenv
 import openmeteo_requests
 import requests_cache
 from retry_requests import retry
+import sys
+from pathlib import Path
+
+# Aggiungi il path parent per importare conversation_manager
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from conversation_manager import conversation_manager
 
 # Carica le variabili d'ambiente
 load_dotenv()
@@ -111,6 +117,15 @@ Se il tempo è invalido rispondi con "validity": "INVALIDO"
         # Validazione
         if location.upper() == "NESSUNA":
             state["location"] = None
+            
+            # Salva la richiesta incompleta
+            conversation_manager.save_pending_request(
+                agent_type="WEATHER",
+                original_query=query,
+                missing_info="location",
+                partial_data={"time_description": time_description, "days_offset": days_offset}
+            )
+            
             state["messages"].append(
                 AIMessage(content="Non ho riconosciuto una località specifica nella tua richiesta. Puoi indicarmi una città?")
             )

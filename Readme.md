@@ -10,6 +10,20 @@ Tramite lang-graph verrà implemtato un sistema multiagent alexa like che rispon
 6. Calcolatrice (prossimamente)
 7. Traduttore (prossimamente)
 
+### Gestione Conversazionale Intelligente
+Il sistema include una **gestione dello stato conversazionale** che permette agli agenti di mantenere il contesto tra richieste successive:
+- Se manca un'informazione (es. località, segno zodiacale), l'agente la chiede
+- Quando l'utente fornisce l'informazione mancante, il sistema completa automaticamente la richiesta precedente
+- Non è necessario ripetere l'intera richiesta
+
+**Esempio:**
+```
+Utente: "Che tempo fa domani?"
+Alexa: "Puoi indicarmi una città?"
+Utente: "Roma"
+Alexa: [fornisce il meteo di Roma per domani]
+```
+
 Saranno implementati quattro agenti: 
 - **Meteo**: Utilizza Open-Meteo API per ottenere previsioni meteo fino a 7 giorni
 - **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali, mensili e annuali con traduzione automatica italiano-inglese-italiano tramite OpenAI
