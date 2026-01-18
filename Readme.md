@@ -24,6 +24,44 @@ Utente: "Roma"
 Alexa: [fornisce il meteo di Roma per domani]
 ```
 
+### 🖥️ Interfaccia Gradio
+Il sistema include un'interfaccia web interattiva realizzata con Gradio:
+
+**Per avviare l'interfaccia:**
+```bash
+python gradio_ui.py
+```
+
+L'interfaccia web si aprirà automaticamente nel browser su `http://localhost:7860`
+
+**Funzionalità dell'interfaccia:**
+- Chat interattiva con il sistema multiagente
+- Esempi di query pre-configurati
+- Gestione conversazionale visuale
+- Pulsante per pulire la conversazione
+- Design responsive e user-friendly
+
+### 🚀 Modalità di Utilizzo
+
+**1. Interfaccia Web (Consigliato)**
+```bash
+python gradio_ui.py
+```
+
+**2. Interfaccia a Riga di Comando**
+```bash
+python multiagent.py
+```
+
+**3. Script Python**
+```python
+from multiagent import run_supervisor
+
+result = run_supervisor("Che tempo fa a Roma domani?")
+for msg in result["messages"]:
+    print(msg.content)
+```
+
 Saranno implementati quattro agenti: 
 - **Meteo**: Utilizza Open-Meteo API per ottenere previsioni meteo fino a 7 giorni
 - **Oroscopo**: Utilizza Horoscope API per ottenere oroscopi giornalieri, settimanali, mensili e annuali con traduzione automatica italiano-inglese-italiano tramite OpenAI

@@ -342,9 +342,7 @@ def fetch_weather(state: AgentState) -> AgentState:
             state["weather_data"] = weather_data
             
             # Crea la risposta formattata
-            response_text = f"\n{'='*60}\n"
             response_text += f"METEO A {location.upper()}\n"
-            response_text += f"{'='*60}\n"
             response_text += f"{time_label.capitalize()} ({state.get('date_str')})\n"
             response_text += f"Coordinate: {latitude:.4f}°N, {longitude:.4f}°E\n\n"
             response_text += f"Condizione: {condition}\n"
@@ -352,7 +350,6 @@ def fetch_weather(state: AgentState) -> AgentState:
             response_text += f"Precipitazioni: {weather_data['precipitation']} (probabilità {weather_data['precipitation_probability']})\n"
             response_text += f"Vento: {weather_data['windspeed']}\n"
             response_text += f"\nFonte: Open-Meteo API\n"
-            response_text += f"{'='*60}\n"
             
             state["messages"].append(AIMessage(content=response_text))
         else:
