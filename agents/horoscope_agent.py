@@ -49,8 +49,8 @@ ZODIAC_SIGNS_IT_EN = {
     "pesci": "pisces"
 }
 
-# Periodi supportati da Horoscope API
-VALID_PERIODS = ["daily", "weekly", "monthly", "yearly"]
+# Periodi supportati da Horoscope API (yearly non è supportato dall'API)
+VALID_PERIODS = ["daily", "weekly", "monthly"]
 
 # Mapping italiano -> inglese per i periodi
 PERIOD_IT_EN = {
@@ -63,8 +63,8 @@ PERIOD_IT_EN = {
     "settimanale": "weekly",
     "mese": "monthly",
     "mensile": "monthly",
-    "anno": "yearly",
-    "annuale": "yearly"
+    "anno": "monthly",
+    "annuale": "monthly"
 }
 
 
@@ -101,17 +101,18 @@ Segni zodiacali validi: {segni_lista}
 Periodi temporali supportati:
 - "oggi", "domani", "giornaliero" -> daily
 - "settimana", "settimanale" -> weekly
-- "mese", "mensile" -> monthly
-- "anno", "annuale" -> yearly
+- "mese", "mensile", "anno", "annuale" -> monthly
 - Se non specificato, assume "daily"
+
+NOTA: L'oroscopo annuale non è disponibile, usa "monthly" come alternativa.
 
 Query: {query}
 
 Rispondi in JSON con questo formato esatto:
 {{
     "zodiac_sign": "nome segno in italiano (minuscolo)",
-    "time_period": "daily|weekly|monthly|yearly",
-    "time_description": "descrizione breve (es. 'di oggi', 'della settimana', 'del mese', 'dell'anno')",
+    "time_period": "daily|weekly|monthly",
+    "time_description": "descrizione breve (es. 'di oggi', 'della settimana', 'del mese')",
     "validity": "VALIDO" o "INVALIDO"
 }}
 
@@ -165,7 +166,7 @@ Se il periodo non è riconoscibile rispondi con "time_period": "daily"
             state["zodiac_sign"] = None
             state["zodiac_sign_en"] = None
             state["messages"].append(
-                AIMessage(content=f"Periodo non valido. Posso fornirti l'oroscopo per: giornaliero, settimanale, mensile o annuale.")
+                AIMessage(content=f"Periodo non valido. Posso fornirti l'oroscopo: giornaliero, settimanale o mensile. (L'oroscopo annuale non è al momento disponibile)")
             )
             return state
         
@@ -224,10 +225,20 @@ def get_horoscope_data(state: HoroscopeState) -> HoroscopeState:
         else:
             raise ValueError("Formato risposta API non valido")
         
+    except requests.exceptions.HTTPError as e:
+        state["horoscope_data"] = None
+        if "404" in str(e):
+            state["messages"].append(
+                AIMessage(content=f"L'API Horoscope non supporta questa richiesta. Verifica che il periodo sia tra: giornaliero, settimanale, mensile.")
+            )
+        else:
+            state["messages"].append(
+                AIMessage(content=f"Errore HTTP dall'API Horoscope: {str(e)}")
+            )
     except requests.exceptions.RequestException as e:
         state["horoscope_data"] = None
         state["messages"].append(
-            AIMessage(content=f"Errore nel recupero dei dati dall'API Horoscope: {str(e)}")
+            AIMessage(content=f"Errore di connessione all'API Horoscope: {str(e)}")
         )
     except Exception as e:
         state["horoscope_data"] = None
@@ -286,8 +297,7 @@ Mantieni lo stesso tono e stile, ma rendilo scorrevole in italiano."""
         period_label = {
             "daily": "di oggi",
             "weekly": "della settimana",
-            "monthly": "del mese",
-            "yearly": "dell'anno"
+            "monthly": "del mese"
         }.get(time_period, "di oggi")
         
         # Formatta il messaggio finale

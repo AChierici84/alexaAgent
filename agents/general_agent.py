@@ -5,6 +5,7 @@ Utilizza OpenAI per conversazioni naturali
 
 import os
 from typing import TypedDict, Annotated
+from datetime import datetime
 from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -38,6 +39,25 @@ def generate_response(state: GeneralState) -> GeneralState:
     state["messages"].append(HumanMessage(content=query))
     
     try:
+        # Ottieni data e ora corrente
+        now = datetime.now()
+        giorni_settimana = ["lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato", "domenica"]
+        mesi = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", 
+                "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
+        
+        giorno_settimana = giorni_settimana[now.weekday()]
+        mese = mesi[now.month - 1]
+        
+        current_datetime = f"""
+INFORMAZIONI DATA E ORA CORRENTE:
+- Data completa: {giorno_settimana} {now.day} {mese} {now.year}
+- Ora: {now.hour:02d}:{now.minute:02d}
+- Giorno della settimana: {giorno_settimana}
+- Giorno del mese: {now.day}
+- Mese: {mese}
+- Anno: {now.year}
+"""
+        
         # Inizializza il modello OpenAI
         llm = ChatOpenAI(
             model="gpt-3.5-turbo",
@@ -46,7 +66,9 @@ def generate_response(state: GeneralState) -> GeneralState:
         )
         
         # System prompt per definire la personalità dell'assistente
-        system_prompt = """Sei Alexa, un assistente virtuale amichevole e disponibile in italiano.
+        system_prompt = f"""Sei Alexa, un assistente virtuale amichevole e disponibile in italiano.
+
+{current_datetime}
 
 La tua personalità:
 - Cordiale, naturale e spontanea
@@ -62,7 +84,10 @@ Gestisci:
 - Ringraziamenti
 - Small talk e conversazioni generiche
 - Domande sulla tua funzionalità
+- Domande su data e ora (che giorno è, che ora è, che mese è, che anno è)
 - Qualsiasi altra domanda non tecnica
+
+Quando rispondi a domande su data/ora, usa le informazioni fornite sopra.
 
 Quando rispondi ai saluti, VARIA le tue risposte. Esempi:
 - "Ciao! Dimmi pure, sono qui per aiutarti."
@@ -77,6 +102,7 @@ Quando ti presentano, spiega in modo vario che sei un assistente virtuale multia
 - Fornire informazioni meteo
 - Dare oroscopi
 - Cercare informazioni su Wikipedia
+- Rispondere a domande su data e ora
 - Rispondere a domande generali
 - Conversare in modo naturale
 

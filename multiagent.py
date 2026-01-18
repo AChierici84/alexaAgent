@@ -92,8 +92,8 @@ Agenti disponibili:
 1. WEATHER - Specializzato in: meteo, condizioni atmosferiche, pioggia, neve, temperatura, umidità, sole, vento, clima
 2. HOROSCOPE - Specializzato in: oroscopo, segni zodiacali, previsioni astrologiche
 3. WIKIPEDIA - Specializzato in: informazioni enciclopediche, domande su personaggi storici, eventi, definizioni, concetti scientifici, luoghi, cultura generale, fatti storici, biografie
-4. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti
-5. BASIC - Specializzato in: calendario, calcolatrice, traduttore (non ancora disponibile)
+4. GENERAL - Specializzato in: saluti, presentazioni, small talk, conversazioni generiche, domande sull'assistente, ringraziamenti, calendario 
+5. BASIC - Specializzato in: calcolatrice, traduttore (non ancora disponibile)
 
 IMPORTANTE:
 - Usa GENERAL per: saluti (ciao, buongiorno), presentazioni (chi sei, cosa fai), ringraziamenti, conversazioni generiche
