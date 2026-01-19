@@ -1,7 +1,7 @@
 # Agent Alexa-like
 ## Multiagente con supervisore
 
-Tramite lang-graph verrà implemtato un sistema multiagent alexa like che risponderà ai seguenti compiti:
+Tramite lang-graph verrà implementato un sistema multiagent alexa like che risponderà ai seguenti compiti:
 1. Invocazione meteo tramite scaricamento dati da API di meteo
 2. Oroscopo con traduzione automatica
 3. Conversazioni generiche, saluti e small talk 
